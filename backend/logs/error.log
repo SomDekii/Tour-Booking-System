@@ -1,0 +1,33 @@
+{"bookingId":"1","error":"Cast to ObjectId failed for value \"1\" (type string) at path \"_id\" for model \"Booking\"","level":"error","message":"UPDATE_BOOKING_STATUS_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 11:50:20","userId":"admin-0001"}
+{"bookingId":"1","error":"Cast to ObjectId failed for value \"1\" (type string) at path \"_id\" for model \"Booking\"","level":"error","message":"UPDATE_BOOKING_STATUS_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 13:31:56","userId":"admin-0001"}
+{"bookingId":"1","error":"Cast to ObjectId failed for value \"1\" (type string) at path \"_id\" for model \"Booking\"","level":"error","message":"UPDATE_BOOKING_STATUS_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 15:08:01","userId":"admin-0001"}
+{"error":"Encryption failed","level":"error","message":"BOOKING_CREATION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 19:19:19","userId":"691ca11afdf59119258aef4b"}
+{"error":"Encryption failed","level":"error","message":"BOOKING_CREATION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 19:23:57","userId":"691ca11afdf59119258aef4b"}
+{"error":"Booking validation failed: contactPhone: Please provide contact phone, contactEmail: Please provide contact email","level":"error","message":"BOOKING_CREATION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 19:26:12","userId":"691ca11afdf59119258aef4b"}
+{"error":"Booking validation failed: contactPhone: Please provide contact phone, contactEmail: Please provide contact email","level":"error","message":"BOOKING_CREATION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 19:26:48","userId":"691ca11afdf59119258aef4b"}
+{"error":"Cast to ObjectId failed for value \"admin-0001\" (type string) at path \"userId\" for model \"Booking\"","level":"error","message":"GET_MY_BOOKINGS_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 19:48:33","userId":"admin-0001"}
+{"error":"Cast to ObjectId failed for value \"admin-0001\" (type string) at path \"userId\" for model \"Booking\"","level":"error","message":"GET_MY_BOOKINGS_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 19:48:33","userId":"admin-0001"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 20:22:08"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 20:22:08"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 20:48:54"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 20:48:54"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 21:04:40"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 21:04:40"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 21:15:37"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 21:15:37"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 21:18:12"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 21:18:12"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 21:47:09"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 21:47:10"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 21:49:29"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 21:49:29"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 21:49:47"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 21:49:47"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 21:53:17"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 21:53:18"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 21:57:48"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-20 21:57:49"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-21 00:55:44"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-21 00:55:44"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-21 00:55:51"}
+{"bookingId":"691f19019b5cb08d58a5090a","error":"Decryption failed","level":"error","message":"DECRYPTION_ERROR","service":"bhutan-tourism-api","timestamp":"2025-11-21 00:55:51"}
