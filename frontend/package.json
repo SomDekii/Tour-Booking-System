@@ -35,7 +35,7 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "https://tour-booking-system-server-esgm.onrender.com",
+  "proxy": "http://localhost:5000",
   "devDependencies": {
     "@types/react": "^19.2.6",
     "@types/react-dom": "^19.2.3",

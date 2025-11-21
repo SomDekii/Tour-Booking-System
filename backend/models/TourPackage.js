@@ -35,6 +35,11 @@ const tourPackageSchema = new mongoose.Schema({
     required: [true, "Please provide available spots"],
     min: 0,
   },
+  category: {
+    type: String,
+    enum: ["adventure", "cultural", "nature", "spiritual"],
+    default: "cultural",
+  },
   imageUrl: {
     type: String,
     default: "",

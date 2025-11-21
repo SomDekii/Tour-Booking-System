@@ -141,11 +141,13 @@ const PackageDetail = () => {
                 )}`;
 
               return (
-                <img
-                  src={imageSrc}
-                  alt={title}
-                  className="w-full h-48 object-cover"
-                />
+                <div className="w-full rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center min-h-[300px] max-h-[500px]">
+                  <img
+                    src={imageSrc}
+                    alt={title}
+                    className="max-w-full max-h-[500px] w-auto h-auto object-contain"
+                  />
+                </div>
               );
             })()}
 

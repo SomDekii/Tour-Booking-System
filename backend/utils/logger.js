@@ -62,4 +62,65 @@ logger.logOperation = (operation, userId, resourceId, changes = {}) => {
   });
 };
 
+/**
+ * Sanitize sensitive data from logs
+ * Removes passwords, tokens, and other sensitive information
+ */
+const sanitizeLogData = (data) => {
+  if (!data || typeof data !== "object") return data;
+
+  const sensitiveFields = [
+    "password",
+    "token",
+    "accessToken",
+    "refreshToken",
+    "apiKey",
+    "secret",
+    "mfaSecret",
+    "mfaOtpHash",
+    "resetToken",
+    "creditCard",
+    "ssn",
+    "cvv",
+    "pin",
+  ];
+
+  const sanitized = { ...data };
+  for (const field of sensitiveFields) {
+    if (sanitized[field]) {
+      sanitized[field] = "[REDACTED]";
+    }
+  }
+
+  // Recursively sanitize nested objects
+  for (const key in sanitized) {
+    if (
+      typeof sanitized[key] === "object" &&
+      sanitized[key] !== null &&
+      !Array.isArray(sanitized[key])
+    ) {
+      sanitized[key] = sanitizeLogData(sanitized[key]);
+    }
+  }
+
+  return sanitized;
+};
+
+// Override logger methods to sanitize sensitive data
+const originalInfo = logger.info.bind(logger);
+const originalError = logger.error.bind(logger);
+const originalWarn = logger.warn.bind(logger);
+
+logger.info = (message, meta = {}) => {
+  return originalInfo(message, sanitizeLogData(meta));
+};
+
+logger.error = (message, meta = {}) => {
+  return originalError(message, sanitizeLogData(meta));
+};
+
+logger.warn = (message, meta = {}) => {
+  return originalWarn(message, sanitizeLogData(meta));
+};
+
 module.exports = logger;

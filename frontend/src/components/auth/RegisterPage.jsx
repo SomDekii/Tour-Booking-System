@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { Mail, Lock, User, Phone, Globe } from "lucide-react";
+import { Mail, Lock, User, Globe } from "lucide-react";
 
 const RegisterPage = () => {
   const navigate = useNavigate();

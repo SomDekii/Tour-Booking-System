@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const packageController = require("../controllers/packageController");
 const { authenticateToken, isAdmin } = require("../middleware/auth");
+const { requirePermission } = require("../middleware/rbac");
 const { sanitizeRequest } = require("../utils/sanitizer");
 const { validatePackageData } = require("../middleware/validationMiddleware");
 
@@ -17,7 +18,7 @@ router.get("/:id", packageController.getPackageById);
 router.post(
   "/",
   authenticateToken,
-  isAdmin,
+  requirePermission("manage:packages"),
   validatePackageData,
   packageController.createPackage
 );
@@ -26,7 +27,7 @@ router.post(
 router.put(
   "/:id",
   authenticateToken,
-  isAdmin,
+  requirePermission("manage:packages"),
   validatePackageData,
   packageController.updatePackage
 );
@@ -35,7 +36,7 @@ router.put(
 router.delete(
   "/:id",
   authenticateToken,
-  isAdmin,
+  requirePermission("manage:packages"),
   packageController.deletePackage
 );
 

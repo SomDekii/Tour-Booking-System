@@ -1,4 +1,15 @@
-const API_URL = process.env.REACT_APP_API_URL || "https://tour-booking-system-server-esgm.onrender.com/api";
+let API_URL = process.env.REACT_APP_API_URL || "/api";
+// Force the dev proxy when running on localhost in development
+try {
+  if (
+    process.env.NODE_ENV !== "production" &&
+    typeof window !== "undefined" &&
+    window.location.hostname === "localhost"
+  ) {
+    API_URL = "/api";
+  }
+} catch (e) {}
+console.log(`[frontend] services/api.js using API_URL=${API_URL}`);
 
 class ApiService {
   // -------------------------------

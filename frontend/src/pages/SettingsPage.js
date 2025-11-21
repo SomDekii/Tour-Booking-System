@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import { useAuth } from "../context/AuthContext";
 import api from "../utils/api";
 
 const SettingsPage = () => {
-  const { user } = useAuth();
+  // `user` is not needed in this settings page; only password change is implemented
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

@@ -17,7 +17,9 @@ const PackagesList = () => {
   useEffect(() => {
     const fetchPackages = async () => {
       setLoading(true);
+      setError("");
       try {
+        console.log("Fetching packages with filters:", filters);
         const data = await api.getPackages(filters);
 
         const packagesArray = Array.isArray(data)
@@ -25,10 +27,11 @@ const PackagesList = () => {
           : Array.isArray(data.packages)
           ? data.packages
           : [];
-        console.log(packagesArray);
+        console.log(`Found ${packagesArray.length} packages`, packagesArray);
 
         setPackages(packagesArray);
       } catch (err) {
+        console.error("Error fetching packages:", err);
         setError(err.message || "Failed to load packages");
       } finally {
         setLoading(false);
@@ -40,7 +43,11 @@ const PackagesList = () => {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters((prevFilters) => ({ ...prevFilters, [name]: value }));
+    // Convert empty strings to empty value (will be filtered out in API call)
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [name]: value === "" ? "" : value,
+    }));
   };
 
   return (
@@ -166,11 +173,13 @@ const PackagesList = () => {
                     console.log(imgPath);
 
                     return (
-                      <img
-                        src={imageSrc}
-                        alt={title}
-                        className="w-full h-48 object-cover"
-                      />
+                      <div className="w-full h-64 bg-gray-100 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={imageSrc}
+                          alt={title}
+                          className="max-w-full max-h-full w-auto h-auto object-contain"
+                        />
+                      </div>
                     );
                   })()}
 

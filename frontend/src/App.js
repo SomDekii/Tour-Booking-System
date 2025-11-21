@@ -13,7 +13,6 @@ import Navbar from "./components/common/Navbar";
 import AdminLayout from "./components/admin/AdminLayout"; // AdminLayout.tsx
 
 // Auth Components
-import LoginPage from "./components/auth/LoginPage";
 import RegisterPage from "./components/auth/RegisterPage";
 import UserLoginPage from "./components/auth/UserLoginPage";
 import AdminLoginPage from "./components/auth/AdminLoginPage";
@@ -74,7 +73,7 @@ const PublicRoute = ({ children }) => {
 // APP CONTENT WITH ROUTES
 function AppContent() {
   const location = useLocation();
-  const { isAdmin, isAuthenticated } = useAuth();
+  // Note: `isAdmin` and `isAuthenticated` are obtained in ProtectedRoute where needed
 
   const isAdminRoute = location.pathname.startsWith("/admin");
 

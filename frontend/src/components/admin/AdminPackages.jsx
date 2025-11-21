@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, X, Upload, ImageIcon } from "lucide-react";
+import { Plus, Edit, Trash2, X, Upload } from "lucide-react";
 import api from "../../utils/api";
 
 const AdminPackages = () => {
@@ -201,16 +201,18 @@ const AdminPackages = () => {
               key={pkg._id}
               className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
             >
-              <img
-                src={
-                  pkg.imageUrl ||
-                  `/placeholder.svg?height=200&width=400&query=${
-                    pkg.title || "/placeholder.svg"
-                  }`
-                }
-                alt={pkg.title}
-                className="w-full h-48 object-cover"
-              />
+              <div className="w-full h-64 bg-gray-100 flex items-center justify-center overflow-hidden">
+                <img
+                  src={
+                    pkg.imageUrl ||
+                    `/placeholder.svg?height=200&width=400&query=${
+                      pkg.title || "/placeholder.svg"
+                    }`
+                  }
+                  alt={pkg.title}
+                  className="max-w-full max-h-full w-auto h-auto object-contain"
+                />
+              </div>
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
                   {pkg.title}
@@ -407,11 +409,11 @@ const AdminPackages = () => {
                 <div className="space-y-3">
                   {/* Image Preview */}
                   {imagePreview && (
-                    <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-gray-200">
+                    <div className="relative w-full rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-50 flex items-center justify-center min-h-[200px] max-h-[400px]">
                       <img
                         src={imagePreview || "/placeholder.svg"}
                         alt="Preview"
-                        className="w-full h-full object-cover"
+                        className="max-w-full max-h-[400px] w-auto h-auto object-contain"
                       />
                       <button
                         type="button"
@@ -419,7 +421,7 @@ const AdminPackages = () => {
                           setImagePreview(null);
                           setFormData({ ...formData, imageUrl: "" });
                         }}
-                        className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                        className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 z-10"
                       >
                         <X className="w-4 h-4" />
                       </button>

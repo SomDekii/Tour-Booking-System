@@ -5,26 +5,55 @@ exports.getAllPackages = async (req, res) => {
   try {
     const { category, minPrice, maxPrice, duration, location } = req.query;
 
+    // Log received query parameters for debugging
+    console.log("Package filters received:", {
+      category,
+      minPrice,
+      maxPrice,
+      duration,
+      location,
+    });
+
     // Build filter object
     const filter = { isActive: true };
 
-    if (category) {
-      filter.category = category;
+    // Category filter - only apply if not empty (case-insensitive)
+    if (category && category.trim() !== "") {
+      // Use case-insensitive regex for category matching
+      filter.category = { $regex: new RegExp(`^${category.trim()}$`, "i") };
+      console.log("Applied category filter:", filter.category);
     }
 
+    // Price range filter - only apply if values are provided and valid
     if (minPrice || maxPrice) {
       filter.price = {};
-      if (minPrice) filter.price.$gte = Number(minPrice);
-      if (maxPrice) filter.price.$lte = Number(maxPrice);
+      if (minPrice && minPrice !== "" && !isNaN(Number(minPrice))) {
+        filter.price.$gte = Number(minPrice);
+        console.log("Applied minPrice filter:", filter.price.$gte);
+      }
+      if (maxPrice && maxPrice !== "" && !isNaN(Number(maxPrice))) {
+        filter.price.$lte = Number(maxPrice);
+        console.log("Applied maxPrice filter:", filter.price.$lte);
+      }
+      // Only add price filter if at least one condition is set
+      if (Object.keys(filter.price).length === 0) {
+        delete filter.price;
+      }
     }
 
-    if (duration) {
+    // Duration filter
+    if (duration && duration !== "" && !isNaN(Number(duration))) {
       filter.duration = Number(duration);
+      console.log("Applied duration filter:", filter.duration);
     }
 
-    if (location) {
-      filter.location = { $regex: location, $options: "i" };
+    // Location filter - case-insensitive search
+    if (location && location.trim() !== "") {
+      filter.location = { $regex: location.trim(), $options: "i" };
+      console.log("Applied location filter:", filter.location);
     }
+
+    console.log("Final filter object:", JSON.stringify(filter, null, 2));
 
     // Aggregate package popularity by counting related bookings (exclude cancelled)
     const packages = await TourPackage.aggregate([

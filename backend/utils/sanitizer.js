@@ -1,4 +1,5 @@
 const validator = require("validator");
+const logger = require("./logger");
 
 // Regex rules
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -12,14 +13,74 @@ const sanitizers = {
 
     let cleaned = validator.trim(input);
 
-    // Escape only XSS-related characters, NOT `/`
+    // Prevent NoSQL injection by removing MongoDB operators
+    const nosqlOperators = [
+      "$ne",
+      "$gt",
+      "$gte",
+      "$lt",
+      "$lte",
+      "$in",
+      "$nin",
+      "$exists",
+      "$regex",
+      "$or",
+      "$and",
+      "$not",
+      "$nor",
+      "$where",
+      "$elemMatch",
+      "$all",
+      "$size",
+      "$type",
+      "$mod",
+      "$text",
+      "$search",
+      "$meta",
+    ];
+    
+    // Remove MongoDB operators from string
+    nosqlOperators.forEach((op) => {
+      const regex = new RegExp(`\\${op}`, "gi");
+      cleaned = cleaned.replace(regex, "");
+    });
+
+    // Escape XSS-related characters
     cleaned = cleaned
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#x27;");
+      .replace(/'/g, "&#x27;")
+      .replace(/\//g, "&#x2F;") // Escape forward slash for XSS
+      .replace(/\\/g, "&#x5C;"); // Escape backslash
 
     return cleaned;
+  },
+
+  // Prevent NoSQL injection in objects
+  sanitizeObject: (obj) => {
+    if (typeof obj !== "object" || obj === null) return obj;
+    if (Array.isArray(obj)) {
+      return obj.map((item) => sanitizers.sanitizeObject(item));
+    }
+
+    const sanitized = {};
+    for (const key in obj) {
+      // Remove MongoDB operators from keys
+      if (key.startsWith("$")) {
+        continue; // Skip MongoDB operator keys
+      }
+
+      const value = obj[key];
+      if (typeof value === "string") {
+        sanitized[key] = sanitizers.sanitizeString(value);
+      } else if (typeof value === "object" && value !== null) {
+        sanitized[key] = sanitizers.sanitizeObject(value);
+      } else {
+        sanitized[key] = value;
+      }
+    }
+    return sanitized;
   },
 
   sanitizeEmail: (email) => {
@@ -85,41 +146,71 @@ const SKIP_SANITIZE_FIELDS = [
 
 const sanitizeRequest = (req, res, next) => {
   try {
-    // Sanitize body
-    for (let key in req.body) {
-      if (
-        typeof req.body[key] === "string" &&
-        !SKIP_SANITIZE_FIELDS.includes(key)
-      ) {
-        req.body[key] = sanitizers.sanitizeString(req.body[key]);
+    // Prevent NoSQL injection in body
+    if (req.body && typeof req.body === "object") {
+      // Check for MongoDB operators in body
+      const bodyKeys = Object.keys(req.body);
+      for (const key of bodyKeys) {
+        if (key.startsWith("$")) {
+          logger.warn("NOSQL_INJECTION_ATTEMPT", {
+            key,
+            path: req.path,
+            method: req.method,
+            ip: req.ip,
+          });
+          return res.status(400).json({
+            message: "Invalid input format",
+            error: "MongoDB operators are not allowed",
+          });
+        }
+      }
+
+      // Sanitize body
+      for (let key in req.body) {
+        if (SKIP_SANITIZE_FIELDS.includes(key)) {
+          continue;
+        }
+        if (typeof req.body[key] === "string") {
+          req.body[key] = sanitizers.sanitizeString(req.body[key]);
+        } else if (typeof req.body[key] === "object" && req.body[key] !== null) {
+          req.body[key] = sanitizers.sanitizeObject(req.body[key]);
+        }
       }
     }
 
-    // Sanitize query
+    // Sanitize query parameters
     for (let key in req.query) {
-      if (
-        typeof req.query[key] === "string" &&
-        !SKIP_SANITIZE_FIELDS.includes(key)
-      ) {
+      if (SKIP_SANITIZE_FIELDS.includes(key)) {
+        continue;
+      }
+      if (typeof req.query[key] === "string") {
         req.query[key] = sanitizers.sanitizeString(req.query[key]);
+      } else if (typeof req.query[key] === "object" && req.query[key] !== null) {
+        req.query[key] = sanitizers.sanitizeObject(req.query[key]);
       }
     }
 
-    // Sanitize params
+    // Sanitize URL parameters
     for (let key in req.params) {
-      if (
-        typeof req.params[key] === "string" &&
-        !SKIP_SANITIZE_FIELDS.includes(key)
-      ) {
+      if (SKIP_SANITIZE_FIELDS.includes(key)) {
+        continue;
+      }
+      if (typeof req.params[key] === "string") {
         req.params[key] = sanitizers.sanitizeString(req.params[key]);
       }
     }
 
     next();
   } catch (error) {
+    logger.error("SANITIZATION_ERROR", {
+      error: error.message,
+      path: req.path,
+      method: req.method,
+      ip: req.ip,
+    });
     return res.status(400).json({
       message: "Invalid input format",
-      error: error.message,
+      error: process.env.NODE_ENV === "development" ? error.message : "Input validation failed",
     });
   }
 };

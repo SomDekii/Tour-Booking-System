@@ -1,4 +1,15 @@
-const API_URL = process.env.REACT_APP_API_URL || "https://tour-booking-system-server-esgm.onrender.com/api";
+let API_URL = process.env.REACT_APP_API_URL || "/api";
+// Force the dev proxy when running on localhost in development
+try {
+  if (
+    process.env.NODE_ENV !== "production" &&
+    typeof window !== "undefined" &&
+    window.location.hostname === "localhost"
+  ) {
+    API_URL = "/api";
+  }
+} catch (e) {}
+console.log(`[frontend] utils/api.js using API_URL=${API_URL}`);
 
 class ApiClient {
   constructor() {
@@ -210,13 +221,26 @@ class ApiClient {
 
   // Package endpoints
   async getPackages(filters = {}) {
-    const queryString = new URLSearchParams(filters).toString();
-    const response = await this.request(
-      `/packages${queryString ? `?${queryString}` : ""}`,
-      {
-        skipAuth: true,
+    // Filter out empty strings and null/undefined values
+    const cleanFilters = {};
+    Object.keys(filters).forEach((key) => {
+      const value = filters[key];
+      if (value !== "" && value !== null && value !== undefined) {
+        cleanFilters[key] = value;
       }
-    );
+    });
+    
+    const queryString = new URLSearchParams(cleanFilters).toString();
+    const url = `/packages${queryString ? `?${queryString}` : ""}`;
+    console.log("[API] getPackages - Filters:", cleanFilters);
+    console.log("[API] getPackages - URL:", url);
+    
+    const response = await this.request(url, {
+      skipAuth: true,
+    });
+    
+    console.log("[API] getPackages - Response:", response);
+    
     // Backend returns { success, count, data: packages }
     // Extract the packages array from the response
     return response.data || response.packages || response || [];

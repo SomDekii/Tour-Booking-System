@@ -31,31 +31,62 @@ class TokenManager {
 
   // Set secure HTTP-only cookies
   static setAuthCookies(res, accessToken, refreshToken) {
-    const isProduction = process.env.NODE_ENV === "production";
+    const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
+    const frontendUrl = (process.env.FRONTEND_URL || "").toLowerCase();
+    const isSecureContext =
+      process.env.NODE_ENV === "production" ||
+      frontendUrl.startsWith("https://");
+
+    // When using cross-site requests in secure contexts, browsers require
+    // `SameSite=None` and `Secure=true` for cookies to be sent.
+    const sameSite = isSecureContext ? "none" : "lax";
+    const secure = !!isSecureContext;
 
     // Access token cookie (1 hour)
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: isProduction, // HTTPS only in production
-      sameSite: isProduction ? "strict" : "lax",
+      secure,
+      sameSite,
       maxAge: 60 * 60 * 1000, // 1 hour
       path: "/",
+      domain: cookieDomain,
     });
 
     // Refresh token cookie (7 days)
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "strict" : "lax",
+      secure,
+      sameSite,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: "/api/auth/refresh-token",
+      domain: cookieDomain,
     });
   }
 
   // Clear auth cookies on logout
   static clearAuthCookies(res) {
-    res.clearCookie("accessToken", { path: "/" });
-    res.clearCookie("refreshToken", { path: "/api/auth/refresh-token" });
+    const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
+    const frontendUrl = (process.env.FRONTEND_URL || "").toLowerCase();
+    const isSecureContext =
+      process.env.NODE_ENV === "production" ||
+      frontendUrl.startsWith("https://");
+    const sameSite = isSecureContext ? "none" : "lax";
+    const secure = !!isSecureContext;
+
+    res.clearCookie("accessToken", {
+      path: "/",
+      domain: cookieDomain,
+      httpOnly: true,
+      secure,
+      sameSite,
+    });
+    res.clearCookie("refreshToken", {
+      path: "/api/auth/refresh-token",
+      domain: cookieDomain,
+      httpOnly: true,
+      secure,
+      sameSite,
+    });
   }
 }
 
