@@ -14,7 +14,7 @@ export function decodeHtmlEntities(encoded) {
 
 export function resolveImageSrc(imgPath) {
   if (!imgPath) return null;
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  const API_URL = process.env.REACT_APP_API_URL || "https://tour-booking-system-server-esgm.onrender.com";
   // If API_URL includes a trailing /api, strip it for static uploads origin
   const uploadsOrigin = API_URL.replace(/\/api\/?$/, "");
   const decoded = decodeHtmlEntities(imgPath).trim();
