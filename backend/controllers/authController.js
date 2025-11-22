@@ -10,7 +10,7 @@ const { sendEmail } = require("../utils/email");
 // ===============================
 // CONFIG
 // ===============================
-const ADMIN_EMAIL = "12230045.gcit@rub.edu.bt";
+const ADMIN_EMAIL = "chheriee13@gmail.com";
 const ADMIN_PASSWORD = "Admin@123@2025";
 const adminOtpStore = new Map(); // short-lived admin OTPs
 
@@ -101,7 +101,10 @@ exports.login = async (req, res) => {
           });
           return res.status(500).json({
             message: "Failed to send OTP email. Please try again later.",
-            error: process.env.NODE_ENV === "development" ? sendResult.error : undefined,
+            error:
+              process.env.NODE_ENV === "development"
+                ? sendResult.error
+                : undefined,
           });
         }
       }
@@ -173,7 +176,7 @@ exports.login = async (req, res) => {
         `,
       });
       if (sendResult.ok) {
-        logger.info("USER_OTP_EMAIL_SENT", { 
+        logger.info("USER_OTP_EMAIL_SENT", {
           email: user.email,
           emailId: sendResult.emailId || sendResult.result?.id,
           provider: sendResult.provider,
@@ -205,7 +208,10 @@ exports.login = async (req, res) => {
         });
         return res.status(500).json({
           message: "Failed to send OTP email. Please try again later.",
-          error: process.env.NODE_ENV === "development" ? sendResult.error : undefined,
+          error:
+            process.env.NODE_ENV === "development"
+              ? sendResult.error
+              : undefined,
           suggestion: sendResult.suggestion,
         });
       }
