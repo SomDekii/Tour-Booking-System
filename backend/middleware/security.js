@@ -9,7 +9,12 @@ const logger = require("../utils/logger");
 /**
  * Enhanced rate limiter with different limits for different endpoints
  */
-const createRateLimiter = (windowMs, max, message, skipSuccessfulRequests = false) => {
+const createRateLimiter = (
+  windowMs,
+  max,
+  message,
+  skipSuccessfulRequests = false
+) => {
   return rateLimit({
     windowMs,
     max,
@@ -31,10 +36,9 @@ const createRateLimiter = (windowMs, max, message, skipSuccessfulRequests = fals
         retryAfter: Math.ceil(windowMs / 1000),
       });
     },
-    // Use IP address as key
-    keyGenerator: (req) => {
-      return req.ip || req.connection.remoteAddress;
-    },
+    // FIXED: Remove custom keyGenerator to use the default IPv6-compatible one
+    // The default keyGenerator already handles both IPv4 and IPv6 correctly
+    // keyGenerator: (req) => req.ip || req.connection.remoteAddress, // ❌ OLD (causes IPv6 error)
   });
 };
 
@@ -83,7 +87,7 @@ const csrfProtection = (req, res, next) => {
   }
 
   const origin = req.get("origin") || req.get("referer");
-  
+
   if (!origin) {
     // Allow requests without origin (e.g., Postman, curl) in development
     if (process.env.NODE_ENV === "development") {
@@ -173,7 +177,10 @@ const securityHeaders = (req, res, next) => {
   res.setHeader("X-Frame-Options", "DENY");
   res.setHeader("X-XSS-Protection", "1; mode=block");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+  res.setHeader(
+    "Permissions-Policy",
+    "geolocation=(), microphone=(), camera=()"
+  );
 
   // Content Security Policy
   const csp = [
@@ -267,4 +274,3 @@ module.exports = {
   enforceHTTPS,
   ipFilter,
 };
-

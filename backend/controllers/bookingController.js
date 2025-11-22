@@ -152,20 +152,75 @@ exports.getMyBookings = async (req, res) => {
 exports.getAllBookings = async (req, res) => {
   try {
     const bookings = await Booking.find()
-      .populate("userId", "-password")
-      .populate("tourPackageId")
+      .populate({
+        path: "userId",
+        select: "name email phone -password",
+        model: "User",
+      })
+      .populate({
+        path: "tourPackageId",
+        select: "title description price duration location category imageUrl",
+        model: "TourPackage",
+      })
       .sort({ createdAt: -1 });
 
-    // Decrypt sensitive data for response
+    // Decrypt sensitive data for response and ensure proper structure
     const decryptedBookings = bookings.map((booking) => {
       const decryptedDetails = decryptBookingDetails(booking);
+      const bookingObj = booking.toObject();
+      
+      // Ensure userId and tourPackageId are properly structured
+      // Handle case where populate might have failed
+      const customerInfo = bookingObj.userId
+        ? {
+            _id: bookingObj.userId._id || bookingObj.userId,
+            name: bookingObj.userId.name || "Unknown User",
+            email: bookingObj.userId.email || bookingObj.contactEmail || "N/A",
+            phone: bookingObj.userId.phone || bookingObj.contactPhone || "N/A",
+          }
+        : {
+            _id: bookingObj.userId || null,
+            name: "Unknown User",
+            email: bookingObj.contactEmail || "N/A",
+            phone: bookingObj.contactPhone || "N/A",
+          };
+
+      const packageInfo = bookingObj.tourPackageId
+        ? {
+            _id: bookingObj.tourPackageId._id || bookingObj.tourPackageId,
+            title: bookingObj.tourPackageId.title || "Unknown Package",
+            description: bookingObj.tourPackageId.description || "",
+            price: bookingObj.tourPackageId.price || 0,
+            duration: bookingObj.tourPackageId.duration || 0,
+            location: bookingObj.tourPackageId.location || "",
+            category: bookingObj.tourPackageId.category || "",
+            imageUrl: bookingObj.tourPackageId.imageUrl || "",
+          }
+        : {
+            _id: bookingObj.tourPackageId || null,
+            title: "Package Not Found",
+            description: "",
+            price: 0,
+            duration: 0,
+            location: "",
+            category: "",
+            imageUrl: "",
+          };
+
       return {
-        ...booking.toObject(),
-        specialRequests: decryptedDetails?.specialRequests || null,
-        contactEmail: decryptedDetails?.contactEmail || null,
-        contactPhone: decryptedDetails?.contactPhone || null,
+        ...bookingObj,
+        userId: customerInfo,
+        tourPackageId: packageInfo,
+        specialRequests: decryptedDetails?.specialRequests || bookingObj.specialRequests || null,
+        contactEmail: decryptedDetails?.contactEmail || bookingObj.contactEmail || customerInfo.email,
+        contactPhone: decryptedDetails?.contactPhone || bookingObj.contactPhone || customerInfo.phone,
         decryptionFailed: !!decryptedDetails?.failed,
       };
+    });
+
+    logger.info("GET_ALL_BOOKINGS_SUCCESS", {
+      count: decryptedBookings.length,
+      userId: req.user?.userId,
     });
 
     res.json(decryptedBookings);
@@ -173,6 +228,7 @@ exports.getAllBookings = async (req, res) => {
     logger.error("GET_ALL_BOOKINGS_ERROR", {
       userId: req.user?.userId,
       error: error.message,
+      stack: error.stack,
     });
     res.status(500).json({ message: "Server error", error: error.message });
   }

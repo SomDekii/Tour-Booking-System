@@ -156,15 +156,41 @@ exports.login = async (req, res) => {
 
       const sendResult = await sendEmail({
         to: user.email,
-        subject: "Login OTP",
-        html: `<p>Your login code is <b>${otp}</b>. Expires in 5 minutes.</p>`,
+        subject: "Login OTP - Tour Booking System",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #ff9500;">Your Login OTP</h2>
+            <p>Hello ${user.name || "User"},</p>
+            <p>Your login verification code is:</p>
+            <div style="background-color: #f5f5f5; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; color: #ff9500; letter-spacing: 5px; margin: 20px 0; border-radius: 8px;">
+              ${otp}
+            </div>
+            <p>This code will expire in <strong>5 minutes</strong>.</p>
+            <p>If you didn't request this code, please ignore this email.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #666; font-size: 12px;">This is an automated email from Tour Booking System.</p>
+          </div>
+        `,
       });
       if (sendResult.ok) {
-        logger.info("USER_OTP_EMAIL_SENT", { email: user.email });
+        logger.info("USER_OTP_EMAIL_SENT", { 
+          email: user.email,
+          emailId: sendResult.emailId || sendResult.result?.id,
+          provider: sendResult.provider,
+          domain: sendResult.domain,
+        });
         return res.json({
           requiresMFA: true,
           method: "otp",
           message: "OTP sent to registered email",
+          emailSent: true,
+          // Include email ID in development for debugging
+          ...(process.env.NODE_ENV === "development" && {
+            debug: {
+              emailId: sendResult.emailId,
+              provider: sendResult.provider,
+            },
+          }),
         });
       } else {
         // Clean up the stored OTP since email failed
@@ -175,10 +201,12 @@ exports.login = async (req, res) => {
           email: user.email,
           error: sendResult.error,
           provider: sendResult.provider,
+          suggestion: sendResult.suggestion,
         });
         return res.status(500).json({
           message: "Failed to send OTP email. Please try again later.",
           error: process.env.NODE_ENV === "development" ? sendResult.error : undefined,
+          suggestion: sendResult.suggestion,
         });
       }
     }

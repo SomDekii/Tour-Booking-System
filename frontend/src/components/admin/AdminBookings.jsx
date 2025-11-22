@@ -108,7 +108,10 @@ const AdminBookings = () => {
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
                     <div>
                       <h3 className="text-xl font-bold text-gray-900 mb-2">
-                        {booking.tourPackageId?.title}
+                        {booking.tourPackageId?.title || 
+                         (typeof booking.tourPackageId === 'string' 
+                           ? `Package ID: ${booking.tourPackageId}` 
+                           : "Unknown Package")}
                       </h3>
                       <span
                         className={`inline-block px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(
@@ -138,7 +141,9 @@ const AdminBookings = () => {
                       <Users className="w-5 h-5 text-orange-500" />
                       <div>
                         <p className="text-sm font-medium">Customer</p>
-                        <p className="text-sm">{booking.userId?.name}</p>
+                        <p className="text-sm">
+                          {booking.userId?.name || booking.userId || "Unknown"}
+                        </p>
                       </div>
                     </div>
 
@@ -146,7 +151,9 @@ const AdminBookings = () => {
                       <Mail className="w-5 h-5 text-orange-500" />
                       <div>
                         <p className="text-sm font-medium">Email</p>
-                        <p className="text-sm">{booking.contactEmail}</p>
+                        <p className="text-sm">
+                          {booking.contactEmail || booking.userId?.email || "N/A"}
+                        </p>
                       </div>
                     </div>
 
@@ -154,7 +161,9 @@ const AdminBookings = () => {
                       <Phone className="w-5 h-5 text-orange-500" />
                       <div>
                         <p className="text-sm font-medium">Phone</p>
-                        <p className="text-sm">{booking.contactPhone}</p>
+                        <p className="text-sm">
+                          {booking.contactPhone || booking.userId?.phone || "N/A"}
+                        </p>
                       </div>
                     </div>
 

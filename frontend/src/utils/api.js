@@ -121,7 +121,7 @@ class ApiClient {
 
   // Auth endpoints
   async login(email, password, mfaCode) {
-    console.log("[v0] Attempting login for:", email);
+    console.log("Attempting login for:", email);
     const data = await this.request("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password, mfaCode }),
@@ -131,7 +131,7 @@ class ApiClient {
     if (data.token) {
       this.setTokens(data.token, data.refreshToken);
       sessionStorage.setItem("user", JSON.stringify(data.user));
-      console.log("[v0] Login successful, user:", data.user);
+      console.log("Login successful, user:", data.user);
     }
 
     return data;
