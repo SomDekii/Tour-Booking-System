@@ -12,6 +12,7 @@ router.use(sanitizeInput);
 
 router.post("/register", validateRegistration, authController.register);
 router.post("/login", validateLogin, authController.login);
+router.post("/admin/login", validateLogin, authController.adminLogin);
 router.post("/refresh-token", authController.refreshToken);
 
 router.get("/me", authenticateToken, authController.getCurrentUser);
@@ -51,31 +52,26 @@ router.post("/debug/send-test", async (req, res) => {
     const result = await sendEmail({
       to,
       subject: "Test Email from Tour-Booking-System",
-      html: `<p>This is a test email to verify email provider configuration.</p>
-             <p>If you received this, your email provider is working correctly!</p>
-             <p><strong>Email ID:</strong> ${result.result?.id || "N/A"}</p>
+      html: `<p>This is a test email to verify SMTP configuration.</p>
+             <p>If you received this, your SMTP email provider is working correctly!</p>
              <p><strong>Sent at:</strong> ${new Date().toISOString()}</p>`,
     });
-    
+
     if (result.ok) {
-      return res.json({ 
-        ok: true, 
+      return res.json({
+        ok: true,
         message: `Test email sent to ${to}`,
         provider: result.provider,
-        emailId: result.emailId || result.result?.id || result.result?.messageId,
-        domain: result.domain,
-        warning: result.warning,
-        note: result.warning 
-          ? "⚠️ Check Resend dashboard to verify domain and check email delivery status"
-          : "✅ Email sent successfully. Check your inbox (and spam folder)."
+        messageId: result.messageId,
+        note: "Email sent successfully via SMTP. Check your inbox (and spam folder).",
       });
     } else {
-      return res.status(500).json({ 
-        ok: false, 
+      return res.status(500).json({
+        ok: false,
         error: result.error,
         provider: result.provider,
-        suggestion: result.suggestion,
-        message: "Failed to send test email. Check your email provider configuration."
+        message:
+          "Failed to send test email. Check your SMTP configuration (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS).",
       });
     }
   } catch (err) {
@@ -87,7 +83,6 @@ router.post("/mfa/setup", authenticateToken, authController.setupMFA);
 router.post("/mfa/verify", authenticateToken, authController.verifyMFA);
 router.post("/mfa/disable", authenticateToken, authController.disableMFA);
 
-router.post("/forgot-password", sanitizeInput, authController.forgotPassword);
 router.post("/reset-password", sanitizeInput, authController.resetPassword);
 
 router.post(

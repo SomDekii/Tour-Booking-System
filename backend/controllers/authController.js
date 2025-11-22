@@ -4,19 +4,16 @@ const TokenManager = require("../utils/tokenManager");
 const speakeasy = require("speakeasy");
 const QRCode = require("qrcode");
 const crypto = require("crypto");
-const logger = require("../utils/logger");
 const { sendEmail } = require("../utils/email");
 
-// ===============================
+const logger = require("../utils/logger");
+
 // CONFIG
-// ===============================
-const ADMIN_EMAIL = "chheriee13@gmail.com";
+const ADMIN_EMAIL = "12230045.gcit@rub.edu.bt";
 const ADMIN_PASSWORD = "Admin@123@2025";
 const adminOtpStore = new Map(); // short-lived admin OTPs
 
-// ===============================
 // REGISTER
-// ===============================
 exports.register = async (req, res) => {
   try {
     const { name, email, password, phone, country } = req.body;
@@ -63,92 +60,137 @@ exports.register = async (req, res) => {
   }
 };
 
-// ===============================
-// LOGIN
-// ===============================
-exports.login = async (req, res) => {
+// ADMIN LOGIN (Admin portal only)
+exports.adminLogin = async (req, res) => {
   try {
     const { email, password, mfaCode } = req.body;
-    logger.info("LOGIN_ATTEMPT", { email });
+    logger.info("ADMIN_LOGIN_ATTEMPT", { email });
 
-    // === ADMIN LOGIN ===
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      if (!mfaCode) {
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const hash = await bcrypt.hash(otp, 10);
-        const expires = Date.now() + 5 * 60 * 1000;
-        adminOtpStore.set(ADMIN_EMAIL, { hash, expires });
-
-        const sendResult = await sendEmail({
-          to: ADMIN_EMAIL,
-          subject: "Admin Login OTP",
-          html: `<p>Your OTP is <b>${otp}</b>. Expires in 5 min.</p>`,
-        });
-        if (sendResult.ok) {
-          logger.info("ADMIN_OTP_EMAIL_SENT", { email: ADMIN_EMAIL });
-          return res.json({
-            requiresMFA: true,
-            method: "otp",
-            message: "OTP sent to admin email",
-          });
-        } else {
-          // Clean up the stored OTP since email failed
-          adminOtpStore.delete(ADMIN_EMAIL);
-          logger.error("ADMIN_OTP_SEND_FAILED", {
-            email: ADMIN_EMAIL,
-            error: sendResult.error,
-            provider: sendResult.provider,
-          });
-          return res.status(500).json({
-            message: "Failed to send OTP email. Please try again later.",
-            error:
-              process.env.NODE_ENV === "development"
-                ? sendResult.error
-                : undefined,
-          });
-        }
-      }
-
-      // Verify OTP
-      const record = adminOtpStore.get(ADMIN_EMAIL);
-      if (!record || record.expires < Date.now()) {
-        adminOtpStore.delete(ADMIN_EMAIL);
-        return res.status(400).json({ message: "OTP expired or not found" });
-      }
-
-      const ok = await bcrypt.compare(mfaCode, record.hash);
-      if (!ok) return res.status(400).json({ message: "Invalid OTP" });
-
-      adminOtpStore.delete(ADMIN_EMAIL);
-      const accessToken = TokenManager.generateAccessToken(
-        "admin-0001",
-        ADMIN_EMAIL,
-        "admin"
-      );
-      const refreshToken = TokenManager.generateRefreshToken("admin-0001");
-      TokenManager.setAuthCookies(res, accessToken, refreshToken);
-      return res.json({
-        message: "Admin login successful",
-        token: accessToken,
-        refreshToken,
-        user: {
-          id: "admin-0001",
-          name: "System Admin",
-          email: ADMIN_EMAIL,
-          role: "admin",
-        },
+    // Only allow admin email to login through admin portal
+    if (email !== ADMIN_EMAIL) {
+      logger.warn("NON_ADMIN_EMAIL_IN_ADMIN_PORTAL", { email });
+      return res.status(403).json({
+        message:
+          "Only admin accounts can login through this portal. Please use /login for regular user accounts.",
       });
     }
 
-    // === USER LOGIN ===
+    if (password !== ADMIN_PASSWORD) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    if (!mfaCode) {
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const hash = await bcrypt.hash(otp, 10);
+      const expires = Date.now() + 5 * 60 * 1000;
+      adminOtpStore.set(ADMIN_EMAIL, { hash, expires });
+
+      const sendResult = await sendEmail({
+        to: ADMIN_EMAIL,
+        subject: "Admin Login OTP",
+        html: `<p>Your OTP is <b>${otp}</b>. Expires in 5 min.</p>`,
+        text: `Your OTP is ${otp}. Expires in 5 min.`,
+      });
+      if (sendResult.ok) {
+        logger.info("ADMIN_OTP_EMAIL_SENT", { email: ADMIN_EMAIL });
+        return res.json({
+          requiresMFA: true,
+          method: "otp",
+          message: "OTP sent to admin email",
+        });
+      } else {
+        // Clean up the stored OTP since email failed
+        adminOtpStore.delete(ADMIN_EMAIL);
+        logger.error("ADMIN_OTP_SEND_FAILED", {
+          email: ADMIN_EMAIL,
+          error: sendResult.error,
+          provider: sendResult.provider,
+        });
+        return res.status(500).json({
+          message: "Failed to send OTP email. Please try again later.",
+          error:
+            process.env.NODE_ENV === "development"
+              ? sendResult.error
+              : undefined,
+        });
+      }
+    }
+
+    // Verify OTP
+    const record = adminOtpStore.get(ADMIN_EMAIL);
+    if (!record || record.expires < Date.now()) {
+      adminOtpStore.delete(ADMIN_EMAIL);
+      return res.status(400).json({ message: "OTP expired or not found" });
+    }
+
+    const ok = await bcrypt.compare(mfaCode, record.hash);
+    if (!ok) return res.status(400).json({ message: "Invalid OTP" });
+
+    adminOtpStore.delete(ADMIN_EMAIL);
+    const accessToken = TokenManager.generateAccessToken(
+      "admin-0001",
+      ADMIN_EMAIL,
+      "admin"
+    );
+    const refreshToken = TokenManager.generateRefreshToken("admin-0001");
+    TokenManager.setAuthCookies(res, accessToken, refreshToken);
+    return res.json({
+      message: "Admin login successful",
+      token: accessToken,
+      refreshToken,
+      user: {
+        id: "admin-0001",
+        name: "System Admin",
+        email: ADMIN_EMAIL,
+        role: "admin",
+      },
+    });
+  } catch (error) {
+    logger.error("ADMIN_LOGIN_ERROR", { error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// USER LOGIN (Regular users only)
+exports.login = async (req, res) => {
+  try {
+    const { email, password, mfaCode } = req.body;
+    logger.info("USER_LOGIN_ATTEMPT", { email });
+
+    // Reject admin login attempts from user portal
+    if (email === ADMIN_EMAIL) {
+      logger.warn("ADMIN_LOGIN_ATTEMPT_FROM_USER_PORTAL", { email });
+      return res.status(403).json({
+        message:
+          "Admin accounts must login through the admin portal. Please use /admin/login",
+      });
+    }
+
+    // Check if user exists and is not an admin
     const user = await User.findOne({ email }).select(
       "+password +mfaSecret +mfaOtpHash +mfaOtpExpires"
     );
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Reject if user is an admin trying to login from user portal
+    if (user.role === "admin") {
+      logger.warn("ADMIN_USER_LOGIN_ATTEMPT_FROM_USER_PORTAL", {
+        email,
+        userId: user._id,
+      });
+      return res.status(403).json({
+        message:
+          "Admin accounts must login through the admin portal. Please use /admin/login",
+      });
+    }
 
     const validPass = await bcrypt.compare(password, user.password);
-    if (!validPass)
+    if (!validPass) {
       return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     // Send OTP if not provided
     if (!mfaCode) {
@@ -265,9 +307,7 @@ exports.login = async (req, res) => {
   }
 };
 
-// ===============================
 // GET CURRENT USER
-// ===============================
 exports.getCurrentUser = async (req, res) => {
   try {
     if (req.user.userId === "admin-0001")
@@ -295,9 +335,7 @@ exports.getCurrentUser = async (req, res) => {
   }
 };
 
-// ===============================
 // CHANGE PASSWORD
-// ===============================
 exports.changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -317,9 +355,7 @@ exports.changePassword = async (req, res) => {
   }
 };
 
-// ===============================
 // MFA SETUP / VERIFY / DISABLE
-// ===============================
 exports.setupMFA = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
@@ -382,50 +418,6 @@ exports.disableMFA = async (req, res) => {
   }
 };
 
-// ===============================
-// FORGOT / RESET PASSWORD
-// ===============================
-exports.forgotPassword = async (req, res) => {
-  try {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
-    if (!user)
-      return res.json({ message: "If email exists, reset link will be sent" });
-
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
-
-    user.resetToken = hashedToken;
-    user.resetTokenExpires = Date.now() + 60 * 60 * 1000; // 1h
-    await user.save();
-
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-    const sendResult = await sendEmail({
-      to: user.email,
-      subject: "Password Reset",
-      html: `<p>Reset link: <a href="${resetUrl}">${resetUrl}</a></p>`,
-    });
-    if (sendResult.ok) {
-      logger.info("PASSWORD_RESET_EMAIL_SENT", { email: user.email });
-    } else {
-      logger.warn("PASSWORD_RESET_EMAIL_FAILED", {
-        email: user.email,
-        error: sendResult.error,
-      });
-    }
-
-    res.json({
-      message: "If email exists, reset link will be sent",
-      resetUrl: process.env.NODE_ENV === "development" ? resetUrl : undefined,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
 exports.resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
@@ -449,9 +441,7 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-// ===============================
 // REFRESH TOKEN
-// ===============================
 exports.refreshToken = (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   if (!refreshToken)
@@ -467,9 +457,7 @@ exports.refreshToken = (req, res) => {
   }
 };
 
-// ===============================
 // BACKUP CODES
-// ===============================
 exports.generateBackupCodes = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
@@ -486,9 +474,7 @@ exports.generateBackupCodes = async (req, res) => {
   }
 };
 
-// ===============================
 // LOGOUT
-// ===============================
 exports.logout = (req, res) => {
   TokenManager.clearAuthCookies(res);
   res.json({ message: "Logout successful" });

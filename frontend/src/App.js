@@ -16,7 +16,6 @@ import AdminLayout from "./components/admin/AdminLayout"; // AdminLayout.tsx
 import RegisterPage from "./components/auth/RegisterPage";
 import UserLoginPage from "./components/auth/UserLoginPage";
 import AdminLoginPage from "./components/auth/AdminLoginPage";
-import ForgotPasswordPage from "./components/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./components/auth/ResetPasswordPage";
 
 // Tourist Components
@@ -34,9 +33,7 @@ import AdminBookings from "./components/admin/AdminBookings";
 import SettingsPage from "./pages/SettingsPage";
 import Footer from "./components/common/Footer";
 
-// ============================================
 // PROTECTED ROUTE COMPONENT
-// ============================================
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { isAuthenticated, isAdmin, loading } = useAuth();
 
@@ -83,7 +80,6 @@ function AppContent() {
     location.pathname === "/login" ||
     location.pathname === "/register" ||
     location.pathname === "/admin/login" ||
-    location.pathname === "/forgot-password" ||
     location.pathname === "/reset-password";
 
   // Allow admins to access public pages as well (no forced redirect).
@@ -111,15 +107,6 @@ function AppContent() {
           element={
             <PublicRoute>
               <AdminLoginPage />
-            </PublicRoute>
-          }
-        />
-
-        <Route
-          path="/forgot-password"
-          element={
-            <PublicRoute>
-              <ForgotPasswordPage />
             </PublicRoute>
           }
         />

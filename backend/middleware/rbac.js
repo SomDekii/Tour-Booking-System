@@ -11,21 +11,12 @@ const rolePermissions = {
     "read:all",
     "write:all",
     "delete:all",
-    "manage:users",
     "manage:packages",
     "manage:bookings",
     "view:stats",
     "upload:files",
   ],
-  user: [
-    "read:own",
-    "write:own",
-    "delete:own",
-    "read:packages",
-    "create:booking",
-    "update:own-booking",
-    "cancel:own-booking",
-  ],
+  user: ["read:own", "read:packages", "create:booking", "cancel:own-booking"],
 };
 
 /**
@@ -93,8 +84,12 @@ const requireOwnershipOrAdmin = (resourceUserIdField = "userId") => {
     }
 
     // Check if user owns the resource
-    const resourceUserId = req.resource?.[resourceUserIdField] || req.params.userId;
-    if (resourceUserId && resourceUserId.toString() !== req.user.userId.toString()) {
+    const resourceUserId =
+      req.resource?.[resourceUserIdField] || req.params.userId;
+    if (
+      resourceUserId &&
+      resourceUserId.toString() !== req.user.userId.toString()
+    ) {
       logger.warn("OWNERSHIP_DENIED", {
         userId: req.user.userId,
         resourceUserId: resourceUserId,
@@ -192,4 +187,3 @@ module.exports = {
   hasPermission,
   rolePermissions,
 };
-

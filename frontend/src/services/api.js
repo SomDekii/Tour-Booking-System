@@ -12,9 +12,7 @@ try {
 console.log(`[frontend] services/api.js using API_URL=${API_URL}`);
 
 class ApiService {
-  // -------------------------------
   // TOKEN HANDLING
-  // -------------------------------
   setToken(token) {
     localStorage.setItem("token", token);
   }
@@ -52,7 +50,7 @@ class ApiService {
         : this.getToken()
       : null;
 
-    // ⭐ FIX: Prevent execution from hitting the unknown custom error at line 65
+    // FIX: Prevent execution from hitting the unknown custom error at line 65
     // If it's a protected admin request and the token is missing, throw a general error now.
     // This pre-empts the faulty client-side check at line 65.
     if (admin && !isAuthRequest && !token) {

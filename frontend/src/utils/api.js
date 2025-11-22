@@ -137,6 +137,23 @@ class ApiClient {
     return data;
   }
 
+  async adminLogin(email, password, mfaCode) {
+    console.log("Attempting admin login for:", email);
+    const data = await this.request("/auth/admin/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password, mfaCode }),
+      skipAuth: true,
+    });
+
+    if (data.token) {
+      this.setTokens(data.token, data.refreshToken);
+      sessionStorage.setItem("user", JSON.stringify(data.user));
+      console.log("Admin login successful, user:", data.user);
+    }
+
+    return data;
+  }
+
   async register(userData) {
     const data = await this.request("/auth/register", {
       method: "POST",

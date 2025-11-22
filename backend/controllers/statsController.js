@@ -24,7 +24,7 @@ exports.getDashboardStats = async (req, res) => {
     const totalRevenue = revenueData.length > 0 ? revenueData[0].total : 0;
 
     const totalPackages = await TourPackage.countDocuments({ isActive: true });
-    const totalUsers = await User.countDocuments({ role: "tourist" });
+    const totalUsers = await User.countDocuments({ role: "user" });
 
     const recentBookings = await Booking.find()
       .populate("userId", "name email")

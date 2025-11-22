@@ -25,6 +25,14 @@ const UserLoginPage = () => {
     setLoading(true);
     setError("");
 
+    // Frontend validation: reject admin email
+    const ADMIN_EMAIL = "12230045.gcit@rub.edu.bt";
+    if (formData.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      setError("Admin accounts must login through the admin portal. Please use /admin/login");
+      setLoading(false);
+      return;
+    }
+
     try {
       const result = await login(
         formData.email,
@@ -34,6 +42,13 @@ const UserLoginPage = () => {
 
       if (result.requiresMFA) {
         setRequiresMFA(true);
+        setLoading(false);
+        return;
+      }
+
+      // Additional check: if somehow admin got through, reject
+      if (result.user && result.user.role === "admin") {
+        setError("Admin accounts must login through the admin portal. Please use /admin/login");
         setLoading(false);
         return;
       }
@@ -90,12 +105,6 @@ const UserLoginPage = () => {
                     <label className="block text-sm font-medium text-gray-700">
                       Password
                     </label>
-                    <Link
-                      to="/forgot-password"
-                      className="text-sm text-orange-600 hover:text-orange-700 font-medium"
-                    >
-                      Forgot?
-                    </Link>
                   </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />

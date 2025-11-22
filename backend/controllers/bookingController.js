@@ -1,7 +1,28 @@
 const Booking = require("../models/Booking");
 const TourPackage = require("../models/TourPackage");
-const { encrypt, decrypt } = require("../utils/encryption");
 const logger = require("../utils/logger");
+
+// Safely require encryption module
+let encrypt, decrypt;
+try {
+  const encryptionModule = require("../utils/encryption");
+  encrypt = encryptionModule.encrypt;
+  decrypt = encryptionModule.decrypt;
+} catch (error) {
+  logger.error("ENCRYPTION_MODULE_LOAD_ERROR", {
+    error: error.message,
+    note: "Encryption functions will not be available. Check ENCRYPTION_KEY environment variable.",
+  });
+  // Provide fallback functions that return safe defaults
+  encrypt = (data) => {
+    logger.warn("ENCRYPTION_NOT_AVAILABLE", { data });
+    return null; // Return null to indicate encryption failed
+  };
+  decrypt = (encryptedData) => {
+    logger.warn("DECRYPTION_NOT_AVAILABLE", { encryptedData });
+    return null; // Return null to indicate decryption failed
+  };
+}
 
 // Helper function to encrypt booking details
 const encryptBookingDetails = (details) => {
@@ -16,11 +37,37 @@ const encryptBookingDetails = (details) => {
 const decryptBookingDetails = (booking) => {
   if (booking.encryptedDetails) {
     try {
-      return decrypt(booking.encryptedDetails);
+      // Check if decrypt function is available
+      if (!decrypt || typeof decrypt !== 'function') {
+        logger.warn("DECRYPT_FUNCTION_NOT_AVAILABLE", {
+          bookingId: booking._id,
+        });
+        return { failed: true, error: "Decryption not available" };
+      }
+      
+      // Validate encryptedDetails structure before attempting decryption
+      if (typeof booking.encryptedDetails !== 'object' || 
+          !booking.encryptedDetails.iv || 
+          !booking.encryptedDetails.encryptedData || 
+          !booking.encryptedDetails.authTag) {
+        logger.warn("INVALID_ENCRYPTED_DETAILS_FORMAT", {
+          bookingId: booking._id,
+          encryptedDetailsType: typeof booking.encryptedDetails,
+        });
+        return { failed: true, error: "Invalid encrypted data format" };
+      }
+      
+      const result = decrypt(booking.encryptedDetails);
+      // If decrypt returns null (from fallback), treat as failed
+      if (result === null) {
+        return { failed: true, error: "Decryption not available" };
+      }
+      return result;
     } catch (error) {
       logger.error("DECRYPTION_ERROR", {
         bookingId: booking._id,
         error: error.message,
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
       });
       return { failed: true, error: error.message };
     }
@@ -151,23 +198,59 @@ exports.getMyBookings = async (req, res) => {
 // -----------------------------
 exports.getAllBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find()
-      .populate({
-        path: "userId",
-        select: "name email phone -password",
-        model: "User",
-      })
-      .populate({
-        path: "tourPackageId",
-        select: "title description price duration location category imageUrl",
-        model: "TourPackage",
-      })
-      .sort({ createdAt: -1 });
+    // Log the request for debugging
+    logger.info("GET_ALL_BOOKINGS_REQUEST", {
+      userId: req.user?.userId,
+      role: req.user?.role,
+      path: req.path,
+    });
+
+    // Step 1: Query bookings
+    let bookings;
+    try {
+      bookings = await Booking.find()
+        .populate({
+          path: "userId",
+          select: "name email phone", // Don't mix inclusion with exclusion - password is already excluded by default in User model
+          model: "User",
+        })
+        .populate({
+          path: "tourPackageId",
+          select: "title description price duration location category imageUrl",
+          model: "TourPackage",
+        })
+        .sort({ createdAt: -1 })
+        .lean(); // Use lean() for better performance and to avoid Mongoose document issues
+    } catch (queryError) {
+      logger.error("GET_ALL_BOOKINGS_QUERY_ERROR", {
+        error: queryError.message,
+        stack: queryError.stack,
+      });
+      throw new Error(`Database query failed: ${queryError.message}`);
+    }
+
+    logger.info("GET_ALL_BOOKINGS_QUERY_RESULT", {
+      count: bookings.length,
+      userId: req.user?.userId,
+    });
 
     // Decrypt sensitive data for response and ensure proper structure
     const decryptedBookings = bookings.map((booking) => {
-      const decryptedDetails = decryptBookingDetails(booking);
-      const bookingObj = booking.toObject();
+      try {
+        // Use booking directly if it's already a plain object (from lean()), otherwise convert
+        const bookingObj = booking.toObject ? booking.toObject() : booking;
+        
+        // Safely decrypt booking details
+        let decryptedDetails = null;
+        try {
+          decryptedDetails = decryptBookingDetails(booking);
+        } catch (decryptError) {
+          logger.warn("DECRYPT_BOOKING_DETAILS_ERROR", {
+            bookingId: bookingObj._id,
+            error: decryptError.message,
+          });
+          decryptedDetails = { failed: true, error: decryptError.message };
+        }
       
       // Ensure userId and tourPackageId are properly structured
       // Handle case where populate might have failed
@@ -207,15 +290,31 @@ exports.getAllBookings = async (req, res) => {
             imageUrl: "",
           };
 
-      return {
-        ...bookingObj,
-        userId: customerInfo,
-        tourPackageId: packageInfo,
-        specialRequests: decryptedDetails?.specialRequests || bookingObj.specialRequests || null,
-        contactEmail: decryptedDetails?.contactEmail || bookingObj.contactEmail || customerInfo.email,
-        contactPhone: decryptedDetails?.contactPhone || bookingObj.contactPhone || customerInfo.phone,
-        decryptionFailed: !!decryptedDetails?.failed,
-      };
+        return {
+          ...bookingObj,
+          userId: customerInfo,
+          tourPackageId: packageInfo,
+          specialRequests: decryptedDetails?.specialRequests || bookingObj.specialRequests || null,
+          contactEmail: decryptedDetails?.contactEmail || bookingObj.contactEmail || customerInfo.email,
+          contactPhone: decryptedDetails?.contactPhone || bookingObj.contactPhone || customerInfo.phone,
+          decryptionFailed: !!decryptedDetails?.failed,
+        };
+      } catch (error) {
+        // If processing a single booking fails, log it but continue with others
+        logger.error("BOOKING_PROCESSING_ERROR", {
+          bookingId: booking._id,
+          error: error.message,
+        });
+        // Return a basic booking object with error flag
+        const bookingObj = booking.toObject ? booking.toObject() : booking;
+        return {
+          ...bookingObj,
+          userId: bookingObj.userId || { name: "Unknown", email: "N/A", phone: "N/A" },
+          tourPackageId: bookingObj.tourPackageId || { title: "Unknown Package" },
+          processingError: true,
+          error: error.message,
+        };
+      }
     });
 
     logger.info("GET_ALL_BOOKINGS_SUCCESS", {
@@ -229,8 +328,20 @@ exports.getAllBookings = async (req, res) => {
       userId: req.user?.userId,
       error: error.message,
       stack: error.stack,
+      name: error.name,
     });
-    res.status(500).json({ message: "Server error", error: error.message });
+    
+    // Return more detailed error in development
+    const isDevelopment = process.env.NODE_ENV === "development";
+    res.status(500).json({ 
+      message: "Server error", 
+      error: error.message,
+      ...(isDevelopment && {
+        stack: error.stack,
+        name: error.name,
+        details: error.toString(),
+      }),
+    });
   }
 };
 

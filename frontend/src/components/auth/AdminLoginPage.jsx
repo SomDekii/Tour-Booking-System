@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import api from "../../utils/api";
 import { Mail, Lock, Shield, ArrowRight, AlertCircle } from "lucide-react";
 
 const AdminLoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -26,7 +25,8 @@ const AdminLoginPage = () => {
     setError("");
 
     try {
-      const result = await login(
+      // Use admin login endpoint instead of regular login
+      const result = await api.adminLogin(
         formData.email,
         formData.password,
         formData.mfaCode
@@ -39,13 +39,14 @@ const AdminLoginPage = () => {
       }
 
       // Verify admin role
-      if (result.user.role !== "admin") {
+      if (result.user && result.user.role === "admin") {
+        // The tokens are already set by api.adminLogin, just update context
+        // Refresh the page to update auth context, or manually trigger context update
+        window.location.href = "/admin/dashboard";
+      } else {
         setError("Access denied. Admin credentials required.");
         setLoading(false);
-        return;
       }
-
-      navigate("/admin/dashboard");
     } catch (err) {
       setError(err.message || "Login failed. Please try again.");
       setLoading(false);

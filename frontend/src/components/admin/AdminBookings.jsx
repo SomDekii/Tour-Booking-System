@@ -6,6 +6,7 @@ const AdminBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchBookings();
@@ -13,13 +14,22 @@ const AdminBookings = () => {
 
   const fetchBookings = async () => {
     setLoading(true);
+    setError(null);
     try {
       // Fetch live bookings from backend (admin-only)
       const resp = await api.getAllBookings();
-      // backend returns an array of bookings as the response body
-      setBookings(resp || []);
+      // Ensure response is an array
+      if (Array.isArray(resp)) {
+        setBookings(resp);
+      } else {
+        console.error("Invalid response format:", resp);
+        setError("Invalid response format from server");
+        setBookings([]);
+      }
     } catch (err) {
       console.error("Failed to fetch bookings:", err);
+      setError(err.message || "Failed to fetch bookings. Please try again.");
+      setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -92,11 +102,29 @@ const AdminBookings = () => {
           )}
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <p className="font-medium">Error loading bookings</p>
+            <p className="text-sm mt-1">{error}</p>
+            <button
+              onClick={fetchBookings}
+              className="mt-2 text-sm underline hover:text-red-800"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
         {/* Bookings List */}
         <div className="space-y-4">
-          {filteredBookings.length === 0 ? (
+          {filteredBookings.length === 0 && !loading && !error ? (
             <div className="bg-white rounded-xl shadow-md p-12 text-center">
               <p className="text-gray-600">No bookings found</p>
+            </div>
+          ) : filteredBookings.length === 0 && !loading && error ? (
+            <div className="bg-white rounded-xl shadow-md p-12 text-center">
+              <p className="text-red-600">{error}</p>
             </div>
           ) : (
             filteredBookings.map((booking) => (
@@ -192,7 +220,9 @@ const AdminBookings = () => {
                       <div>
                         <p className="text-sm font-medium">Total Price</p>
                         <p className="text-lg font-bold">
-                          ${booking.totalPrice}
+                          {typeof booking.totalPrice === 'number' 
+                            ? booking.totalPrice.toLocaleString() 
+                            : String(booking.totalPrice || 0).replace(/^\$+/, '')}
                         </p>
                       </div>
                     </div>

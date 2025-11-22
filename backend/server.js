@@ -277,30 +277,24 @@ process.on("unhandledRejection", (err) => {
   });
 });
 
-// START SERVER with optional SMTP verification
+// START SERVER with optional email provider verification
 const PORT = process.env.PORT || 5000;
 let server;
 
 const startServer = async () => {
-  // Verify email provider client on startup for non-dev providers
-  const emailProvider = (
-    process.env.EMAIL_PROVIDER ||
-    (process.env.NODE_ENV === "production"
-      ? process.env.RESEND_API_KEY
-        ? "resend"
-        : "smtp"
-      : "dev")
-  ).toLowerCase();
-  if (emailProvider !== "dev") {
-    try {
-      const { ensureTransporter } = require("./utils/email");
-      await ensureTransporter();
-      logger.info("EMAIL_PROVIDER_READY", { provider: emailProvider });
-    } catch (err) {
-      logger.error("EMAIL_STARTUP_CHECK_FAILED", { error: err.message });
-      // Exit so deployment surfaces the configuration error
-      process.exit(1);
-    }
+  // Try to verify SMTP configuration, but don't block server startup
+  try {
+    const { ensureTransporter } = require("./utils/email");
+    await ensureTransporter();
+    logger.info("EMAIL_PROVIDER_READY", { provider: "smtp" });
+  } catch (err) {
+    logger.warn("EMAIL_STARTUP_CHECK_FAILED", { 
+      error: err.message,
+      note: "Server will start but emails may fail. Check SMTP configuration in environment variables."
+    });
+    console.warn("\n⚠️  WARNING: SMTP configuration may be incorrect.");
+    console.warn(`   ${err.message}`);
+    console.warn("   Server will start but OTP emails will fail until SMTP is configured.\n");
   }
 
   server = app.listen(PORT, () => {

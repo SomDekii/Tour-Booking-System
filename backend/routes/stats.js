@@ -11,9 +11,7 @@ const {
 // Apply sanitization middleware
 router.use(sanitizeInput);
 
-// ==============================
 //     ADMIN STATS ROUTES
-// ==============================
 
 // GET /api/stats → Dashboard summary
 router.get("/", authenticateToken, isAdmin, statsController.getDashboardStats);
