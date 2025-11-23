@@ -36,9 +36,7 @@ const createRateLimiter = (
         retryAfter: Math.ceil(windowMs / 1000),
       });
     },
-    // FIXED: Remove custom keyGenerator to use the default IPv6-compatible one
-    // The default keyGenerator already handles both IPv4 and IPv6 correctly
-    // keyGenerator: (req) => req.ip || req.connection.remoteAddress, // ❌ OLD (causes IPv6 error)
+    
   });
 };
 
